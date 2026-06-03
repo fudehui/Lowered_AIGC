@@ -1,10 +1,140 @@
 # Lowered AIGC
+## English Version
 
+Lowered AIGC is a DOCX-oriented rewriting tool for academic papers. It reads high-risk or medium-risk passages from an AIGC detection report, aligns those passages back to the original Word document, rewrites only the matched paragraphs with an LLM, and writes the result into a new DOCX file.
+
+The project uses LangGraph-style orchestration for the workflow and the OpenAI SDK for model requests. It also includes a Capability Router, allowing the LLM to choose among candidate skills, tools, MCP capabilities, or built-in rules based on concise capability summaries.
+
+### Features
+
+- Extract risk passages from DOCX or PDF AIGC reports.
+- Align report passages to paragraphs in the original DOCX.
+- Rewrite only matched risk paragraphs instead of the whole paper.
+- Preserve academic meaning, terminology, numbers, citations, model names, and document structure as much as possible.
+- Skip complex OOXML paragraphs containing formulas, images, field codes, or embedded objects.
+- Mask fragile text such as numbers, references, URLs, and model names before rewriting.
+- Use OpenAI-compatible Responses API through the OpenAI SDK.
+- Use LangGraph to organize the workflow into clear, extensible nodes.
+- Support external prompt skills such as `humanize-writing`.
+- Support Capability Router with `skill`, `tool`, `mcp`, and `none` route types.
+- Support an optional `human-review` MCP candidate for manual approval workflows.
+- Generate a JSON process report for debugging and auditability.
+
+### Workflow
+
+```text
+extract_report_spans
+  -> route_capability
+  -> align_docx_paragraphs
+  -> rewrite_docx_paragraphs
+  -> write_process_report
+```
+
+### Installation
+
+```powershell
+cd D:\Lowered_AIGC
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+### Configuration
+
+Default config file:
+
+```text
+lowered_aigc/config/default.yaml
+```
+
+Recommended API key setup:
+
+```powershell
+$env:OPENAI_API_KEY="your-api-key"
+```
+
+Do not commit real API keys to GitHub.
+
+### Quick Start
+
+```powershell
+python -m lowered_aigc.cli `
+  --docx "paper.docx" `
+  --report-file "aigc_report.pdf" `
+  --out "output\lowered.docx" `
+  --report "output\lowered_aigc_report.json" `
+  --model "gpt-4.1-mini" `
+  --base-url "https://api.openai.com/v1" `
+  --api-key-env "OPENAI_API_KEY"
+```
+
+Run with YAML config:
+
+```powershell
+python -m lowered_aigc.cli --config lowered_aigc\config\default.yaml
+```
+
+### Debug LLM Calls
+
+```powershell
+python -m lowered_aigc.cli `
+  --docx "paper.docx" `
+  --report-file "aigc_report.pdf" `
+  --out "output\debug.docx" `
+  --report "output\debug.json" `
+  --max-spans 1 `
+  --log-level DEBUG `
+  --llm-debug-file "output\llm_calls.jsonl"
+```
+
+The JSONL debug file records request payloads, raw responses, extracted output text, and call types.
+
+### Capability Router
+
+The router receives capability summaries and short text previews. It then asks the LLM to choose the next capability:
+
+```json
+{
+  "route_type": "skill",
+  "name": "humanize-writing",
+  "reason": "Best suited for reducing AI-writing traces.",
+  "need_full_content": true
+}
+```
+
+Supported route types:
+
+| Route Type | Meaning |
+|---|---|
+| `skill` | Load the selected full skill and use it for rewriting. |
+| `tool` | Reserved for tool executors. |
+| `mcp` | Reserved for MCP executors; currently includes `human-review`. |
+| `none` | Use built-in academic rewriting rules. |
+
+### Outputs
+
+| File | Description |
+|---|---|
+| `output/lowered.docx` | Rewritten DOCX file. |
+| `output/lowered_aigc_report.json` | Process report. |
+| `output/llm_calls.jsonl` | Optional LLM call debug log. |
+| `output/human_review_queue.jsonl` | Optional manual review queue. |
+
+### Notes
+
+- This tool is designed to assist academic editing, not to fabricate data, references, or conclusions.
+- Always review generated text before formal submission.
+- Keep API keys and unpublished papers out of public repositories unless you intentionally want to publish them.
+
+
+
+
+
+
+## 中文说明
 Lowered AIGC 是一个面向学术论文 DOCX 的 AIGC 风险段落改写工具。它可以读取 AIGC 检测报告中标记的高风险或中风险文本，将这些文本自动对齐到原始 Word 论文段落，再通过 LLM 进行保持语义和学术事实不变的改写，最后将结果写回新的 DOCX 文件。
 
 项目采用 LangGraph / LangChain 思路做流程编排，OpenAI SDK 负责模型请求；同时引入 Capability Router，让 LLM 根据候选 skill / tool / MCP 摘要判断下一步应该使用哪种能力，而不是把所有能力内容一次性塞入上下文。
-
-## 中文说明
 
 ### 项目特点
 
@@ -299,129 +429,3 @@ $env:OPENAI_API_KEY="your-api-key"
 
 ---
 
-## English Version
-
-Lowered AIGC is a DOCX-oriented rewriting tool for academic papers. It reads high-risk or medium-risk passages from an AIGC detection report, aligns those passages back to the original Word document, rewrites only the matched paragraphs with an LLM, and writes the result into a new DOCX file.
-
-The project uses LangGraph-style orchestration for the workflow and the OpenAI SDK for model requests. It also includes a Capability Router, allowing the LLM to choose among candidate skills, tools, MCP capabilities, or built-in rules based on concise capability summaries.
-
-### Features
-
-- Extract risk passages from DOCX or PDF AIGC reports.
-- Align report passages to paragraphs in the original DOCX.
-- Rewrite only matched risk paragraphs instead of the whole paper.
-- Preserve academic meaning, terminology, numbers, citations, model names, and document structure as much as possible.
-- Skip complex OOXML paragraphs containing formulas, images, field codes, or embedded objects.
-- Mask fragile text such as numbers, references, URLs, and model names before rewriting.
-- Use OpenAI-compatible Responses API through the OpenAI SDK.
-- Use LangGraph to organize the workflow into clear, extensible nodes.
-- Support external prompt skills such as `humanize-writing`.
-- Support Capability Router with `skill`, `tool`, `mcp`, and `none` route types.
-- Support an optional `human-review` MCP candidate for manual approval workflows.
-- Generate a JSON process report for debugging and auditability.
-
-### Workflow
-
-```text
-extract_report_spans
-  -> route_capability
-  -> align_docx_paragraphs
-  -> rewrite_docx_paragraphs
-  -> write_process_report
-```
-
-### Installation
-
-```powershell
-cd D:\Lowered_AIGC
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-```
-
-### Configuration
-
-Default config file:
-
-```text
-lowered_aigc/config/default.yaml
-```
-
-Recommended API key setup:
-
-```powershell
-$env:OPENAI_API_KEY="your-api-key"
-```
-
-Do not commit real API keys to GitHub.
-
-### Quick Start
-
-```powershell
-python -m lowered_aigc.cli `
-  --docx "paper.docx" `
-  --report-file "aigc_report.pdf" `
-  --out "output\lowered.docx" `
-  --report "output\lowered_aigc_report.json" `
-  --model "gpt-4.1-mini" `
-  --base-url "https://api.openai.com/v1" `
-  --api-key-env "OPENAI_API_KEY"
-```
-
-Run with YAML config:
-
-```powershell
-python -m lowered_aigc.cli --config lowered_aigc\config\default.yaml
-```
-
-### Debug LLM Calls
-
-```powershell
-python -m lowered_aigc.cli `
-  --docx "paper.docx" `
-  --report-file "aigc_report.pdf" `
-  --out "output\debug.docx" `
-  --report "output\debug.json" `
-  --max-spans 1 `
-  --log-level DEBUG `
-  --llm-debug-file "output\llm_calls.jsonl"
-```
-
-The JSONL debug file records request payloads, raw responses, extracted output text, and call types.
-
-### Capability Router
-
-The router receives capability summaries and short text previews. It then asks the LLM to choose the next capability:
-
-```json
-{
-  "route_type": "skill",
-  "name": "humanize-writing",
-  "reason": "Best suited for reducing AI-writing traces.",
-  "need_full_content": true
-}
-```
-
-Supported route types:
-
-| Route Type | Meaning |
-|---|---|
-| `skill` | Load the selected full skill and use it for rewriting. |
-| `tool` | Reserved for tool executors. |
-| `mcp` | Reserved for MCP executors; currently includes `human-review`. |
-| `none` | Use built-in academic rewriting rules. |
-
-### Outputs
-
-| File | Description |
-|---|---|
-| `output/lowered.docx` | Rewritten DOCX file. |
-| `output/lowered_aigc_report.json` | Process report. |
-| `output/llm_calls.jsonl` | Optional LLM call debug log. |
-| `output/human_review_queue.jsonl` | Optional manual review queue. |
-
-### Notes
-
-- This tool is designed to assist academic editing, not to fabricate data, references, or conclusions.
-- Always review generated text before formal submission.
-- Keep API keys and unpublished papers out of public repositories unless you intentionally want to publish them.
