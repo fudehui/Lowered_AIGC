@@ -1,0 +1,42 @@
+paths:
+  input_docx:
+  report_file:
+  output_docx: output/lowered.docx
+  process_report_json: output/lowered_aigc_report.json
+
+report:
+  max_spans: 1
+
+alignment:
+  min_score: 0.58
+
+skill:
+  path: lowered_aigc/skills/external/humanize-writing
+  source: https://github.com/jpeggdev/humanize-writing
+  description: 外部现成 humanize-writing skill，用于识别并改写常见 AI 写作模式。
+
+llm:
+  model: qwen3.5-35b-a3b
+  # 可以直接填写 api_key，也可以保留为空并使用 api_key_env 指向环境变量。
+  api_key:
+  api_key_env: OPENAI_API_KEY
+  base_url: https://dashscope.aliyuncs.com/compatible-mode/v1
+  timeout: 120
+
+
+
+  temperature: 0.35
+  max_output_tokens: 1200
+
+rewrite:
+  max_retries: 2
+
+review:
+  enabled: true
+  queue_jsonl: output/human_review_queue.jsonl
+  decisions_json: output/human_review_decisions.json
+
+quality:
+  min_length_ratio: 0.45
+  max_length_ratio: 1.8
+  max_similarity: 0.985

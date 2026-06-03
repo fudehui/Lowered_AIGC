@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.codegraph/
+lowered_aigc/skills/external/humanize-writing/.git/
+lowered_aigc/skills/external/humanize-writing/.git.bak/
+lowered_aigc/skills/external/humanize-writing/.git.vendor/
+
+# Local environments
+.venv/
+venv/
+env/
+
+# Local secrets and machine-specific config
+.env
+*.local.yaml
+
+# Generated outputs
+output/
+*_word_export.pdf
+
+# Office lock files
+~$*.docx
+~$*.pptx
+~$*.xlsx
